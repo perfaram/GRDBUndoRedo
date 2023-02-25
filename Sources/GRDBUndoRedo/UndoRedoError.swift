@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum GRDBUndoRedoError: Error {
+public enum GRDBUndoRedoError: Error {
     
     // barrier was called before activation
     case notActive

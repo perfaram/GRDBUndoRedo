@@ -21,10 +21,10 @@ import GRDB
 ///
 /// The methods on this class must never be called from within a GRDB read/write block.
 /// Although, GRDB checks for such cases and will raise, so no deadlock will happen.
-class UndoRedoManager {
+public class UndoRedoManager {
     typealias URError = GRDBUndoRedoError
     
-    enum Action {
+    public enum Action {
         case undo
         case redo
     }
@@ -37,7 +37,7 @@ class UndoRedoManager {
     internal let observedRecordTypes: Set<String>
     
     /// Regenerates the triggers and "listens" to changes again.
-    func reactivate() throws {
+    public func reactivate() throws {
         if _undoState.active {
             return
         }
@@ -51,7 +51,7 @@ class UndoRedoManager {
     }
     
     /// Halt the undo/redo system and delete the undo/redo stacks.
-    func deactivate() throws {
+    public func deactivate() throws {
         if !_undoState.active {
             return
         }
@@ -66,7 +66,7 @@ class UndoRedoManager {
     ///
     /// Arguments should be one or more database tables (in the database associated
     /// with the handle "db") whose changes are to be recorded for undo/redo purposes.
-    init(recordTypes: TableRecord.Type..., db: DatabaseQueue, tablePrefix: String = "") throws {
+    public init(recordTypes: TableRecord.Type..., db: DatabaseQueue, tablePrefix: String = "") throws {
         self.dbQueue = db
         let prefix = tablePrefix == "" ? "" : "\(tablePrefix)_"
         self.tablePrefix = prefix
@@ -81,7 +81,7 @@ class UndoRedoManager {
     }
 
     /// Do a single step of undo or redo.
-    func perform(_ action: Action) throws {
+    public func perform(_ action: Action) throws {
         let isUndo = action == .undo
         var v1 = isUndo ? _undoState.undoStack : _undoState.redoStack
         var v2 = isUndo ? _undoState.redoStack : _undoState.undoStack
@@ -139,7 +139,7 @@ class UndoRedoManager {
     ///
     /// From the point when this routine is called up until the next unfreeze,
     /// new database changes are rejected from the undo stack.
-    func freeze() throws {
+    public func freeze() throws {
         guard _undoState.active else {
             throw URError.notActive
         }
@@ -156,7 +156,7 @@ class UndoRedoManager {
     }
     
     /// Begin accepting undo actions again.
-    func unfreeze() throws {
+    public func unfreeze() throws {
         guard _undoState.active else {
             throw URError.notActive
         }
@@ -176,7 +176,7 @@ class UndoRedoManager {
     // MARK missing method (see original Tcl code)
     
     /// Create an undo barrier right now.
-    func barrier() throws -> Bool {
+    public func barrier() throws -> Bool {
         // MARK missing implementation (see original Tcl code)
         _undoState.pending = []
         
@@ -208,13 +208,13 @@ class UndoRedoManager {
 }
 
 extension UndoRedoManager {
-    var isActive: Bool {
+    public var isActive: Bool {
         get {
             return _undoState.active
         }
     }
     
-    var isFrozen: Bool {
+    public var isFrozen: Bool {
         get {
             return _undoState.freeze >= 0
         }
