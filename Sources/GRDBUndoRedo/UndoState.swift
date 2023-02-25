@@ -17,9 +17,6 @@ internal struct UndoState: Equatable {
     var active: Bool = false
     var undoStack: [UndoRange] = []
     var redoStack: [UndoRange] = []
-    var pending: [Int] = []
     var firstLog: Int = 1
-    //var startState: [Int] = []
-    
     var freeze: Int = -1
 }

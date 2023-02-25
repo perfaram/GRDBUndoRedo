@@ -173,13 +173,8 @@ public class UndoRedoManager {
         _undoState.freeze = -1
     }
     
-    // MARK missing method (see original Tcl code)
-    
     /// Create an undo barrier right now.
     public func barrier() throws -> Bool {
-        // MARK missing implementation (see original Tcl code)
-        _undoState.pending = []
-        
         guard _undoState.active else {
             throw URError.notActive
         }
