@@ -80,6 +80,14 @@ final class UndoRedoManagerTests: XCTestCase {
         XCTAssertEqual(state, undoRedo._undoState)
     }
     
+    func testActiveGetterConsistency() throws {
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
+        
+        XCTAssertEqual(undoRedo.isActive, undoRedo._undoState.active)
+        try undoRedo.deactivate()
+        XCTAssertEqual(undoRedo.isActive, undoRedo._undoState.active)
+    }
+    
     func testFreeze() throws {
         undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo._undoState.freeze, -1)
@@ -233,6 +241,16 @@ final class UndoRedoManagerTests: XCTestCase {
         XCTAssertThrowsError(try undoRedo.perform(.undo)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.endOfStack)
         }
+    }
+    
+    func testCanUndoGetterConsistency() throws {
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
+        XCTAssertFalse(undoRedo.canUndo)
+        
+        let newItems = [Tbl1(a: 404)]
+        try insertDummies(newItems)
+        XCTAssertTrue(try undoRedo.barrier())
+        XCTAssertTrue(undoRedo.canUndo)
     }
     
     func testUndoInsertOne() throws {
@@ -399,6 +417,21 @@ final class UndoRedoManagerTests: XCTestCase {
         XCTAssertThrowsError(try undoRedo.perform(.redo)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.endOfStack)
         }
+    }
+    
+    func testCanRedoGetterConsistency() throws {
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
+        XCTAssertFalse(undoRedo.canRedo)
+        
+        let newItems = [Tbl1(a: 404)]
+        try insertDummies(newItems)
+        XCTAssertTrue(try undoRedo.barrier())
+        XCTAssertFalse(undoRedo.canRedo)
+        
+        try undoRedo.perform(.undo)
+        XCTAssertTrue(undoRedo.canRedo)
+        try undoRedo.perform(.redo)
+        XCTAssertFalse(undoRedo.canRedo)
     }
     
     func testRedoInsert() throws {

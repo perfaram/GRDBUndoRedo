@@ -214,4 +214,16 @@ extension UndoRedoManager {
             return _undoState.freeze >= 0
         }
     }
+    
+    public var canUndo: Bool {
+        get {
+            return !_undoState.undoStack.isEmpty
+        }
+    }
+    
+    public var canRedo: Bool {
+        get {
+            return !_undoState.redoStack.isEmpty
+        }
+    }
 }
