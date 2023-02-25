@@ -2,9 +2,9 @@ import XCTest
 @testable import GRDBUndoRedo
 import GRDB
 
-final class GRDBUndoRedoTests: XCTestCase {
+final class UndoRedoManagerTests: XCTestCase {
     var dbQueue: DatabaseQueue!
-    var undoRedo: GRDBUndoRedo!
+    var undoRedo: UndoRedoManager!
     
     private func insertDummies(_ items: Array<MutablePersistableRecord>) throws {
         try dbQueue.write { db in
@@ -17,7 +17,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     
     func testActivateOneTable() throws {
         var undoState = UndoState()
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo._undoState.firstLog, 1)
         
         let iudTriggers = ["i", "u", "d"]
@@ -35,7 +35,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     
     func testActivateSeveralTables() throws {
         var undoState = UndoState()
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, Tbl2.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, Tbl2.self, db: dbQueue)
         
         let iudTriggers = ["i", "u", "d"]
         var triggerNames = iudTriggers.map { undoRedo.triggerNameForTable(Tbl1.databaseTableName, type: $0) }
@@ -52,7 +52,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testReactivateWhileActive() throws {
-        undoRedo = try GRDBUndoRedo(db: dbQueue)
+        undoRedo = try UndoRedoManager(db: dbQueue)
         let undoState = undoRedo._undoState
         XCTAssertEqual(undoState.active, true)
         
@@ -61,7 +61,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testDeactivate() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         var state = undoRedo._undoState
         
         try undoRedo.deactivate()
@@ -81,7 +81,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testFreeze() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo._undoState.freeze, -1)
         let newItems = [Tbl1(a: 4), Tbl1(a: 8)]
         try insertDummies(newItems)
@@ -92,7 +92,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testFreezeWhileFrozen() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo._undoState.freeze, -1)
         
         try undoRedo.freeze()
@@ -104,7 +104,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testFreezeWhileNotActive() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         try undoRedo.deactivate()
         let state = undoRedo._undoState
         
@@ -115,7 +115,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUnfreeze() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo._undoState.freeze, -1)
         
         let newItems = [Tbl1(a: 15), Tbl1(a: 16)]
@@ -143,7 +143,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUnfreezeWhileNotActive() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         try undoRedo.deactivate()
         let state = undoRedo._undoState
         
@@ -158,14 +158,14 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testFrozenGetterConsistency() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo.isFrozen, false)
         try undoRedo.freeze()
         XCTAssertEqual(undoRedo.isFrozen, true)
     }
     
     func testUnfreezeWhileNotFrozen() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertEqual(undoRedo.isFrozen, false)
         
         let state = undoRedo._undoState
@@ -174,7 +174,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testBarrier() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         try insertDummies([Tbl1(a: 66)])
         XCTAssertTrue(try undoRedo.barrier())
@@ -186,7 +186,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testBarrierBulkChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItems = [Tbl1(a: 404), Tbl1(a: 420)]
         try insertDummies(newItems)
@@ -195,7 +195,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testBarrierWhileNotActive() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         try undoRedo.deactivate()
         XCTAssertThrowsError(try undoRedo.barrier()) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.notActive)
@@ -205,7 +205,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testBarrierWhileFrozen() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         try insertDummies([Tbl1(a: 23)])
         XCTAssertTrue(try undoRedo.barrier())
         
@@ -218,7 +218,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testBarrierAfterNoChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         try insertDummies([Tbl1(a: 23)])
         XCTAssertTrue(try undoRedo.barrier())
@@ -229,14 +229,14 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUndoNoChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertThrowsError(try undoRedo.perform(.undo)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.endOfStack)
         }
     }
     
     func testUndoInsertOne() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItems = [Tbl1(a: 404)]
         try insertDummies(newItems)
@@ -261,7 +261,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUndoInsertBulk() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItems = [Tbl1(a: 404), Tbl1(a: 420)]
         try insertDummies(newItems)
@@ -286,7 +286,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUndoUpdate() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItem = Tbl1(a: 1)
         try insertDummies([newItem])
@@ -316,7 +316,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testNonNaiveUpdateTrigger() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let aValue = 2
         let newItem = Tbl1(a: aValue)
@@ -330,7 +330,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUndoDelete() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItem = Tbl1(a: 1)
         try insertDummies([newItem])
@@ -359,7 +359,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testUndoSeveralChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItems = [Tbl1(a: 23), Tbl1(a: 42)]
         try insertDummies(newItems)
@@ -395,14 +395,14 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testRedoNoChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         XCTAssertThrowsError(try undoRedo.perform(.redo)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.endOfStack)
         }
     }
     
     func testRedoInsert() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         let newItems = [Tbl1(a: 23)]
         try insertDummies(newItems)
         _ = try undoRedo.barrier()
@@ -425,7 +425,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testRedoUpdate() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         let newItems = [Tbl1(a: 23)]
         try insertDummies(newItems)
         _ = try undoRedo.barrier()
@@ -454,7 +454,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testRedoDelete() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         let newItems = [Tbl1(a: 23)]
         try insertDummies(newItems)
         _ = try undoRedo.barrier()
@@ -487,7 +487,7 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testRedoSeveralChanges() throws {
-        undoRedo = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue)
         
         let newItems = [Tbl1(a: 23), Tbl1(a: 42)]
         try insertDummies(newItems)
@@ -535,18 +535,18 @@ final class GRDBUndoRedoTests: XCTestCase {
             try db.execute(sql: "PRAGMA foreign_keys = OFF;")
         }
         
-        XCTAssertNoThrow(try GRDBUndoRedo(recordTypes: RTbl1.self, db: dbQueue))
-        XCTAssertNoThrow(try GRDBUndoRedo(recordTypes: RTbl2.self, db: dbQueue))
+        XCTAssertNoThrow(try UndoRedoManager(recordTypes: RTbl1.self, db: dbQueue))
+        XCTAssertNoThrow(try UndoRedoManager(recordTypes: RTbl2.self, db: dbQueue))
         
         try dbQueue.writeWithoutTransaction { db in
             try db.execute(sql: "PRAGMA foreign_keys = ON;")
         }
         
-        XCTAssertThrowsError(try GRDBUndoRedo(recordTypes: RTbl1.self, db: dbQueue)) { error in
+        XCTAssertThrowsError(try UndoRedoManager(recordTypes: RTbl1.self, db: dbQueue)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.foreignKeyReferencedTableNotObserved)
         }
         
-        XCTAssertThrowsError(try GRDBUndoRedo(recordTypes: RTbl2.self, db: dbQueue)) { error in
+        XCTAssertThrowsError(try UndoRedoManager(recordTypes: RTbl2.self, db: dbQueue)) { error in
             XCTAssertEqual(error as! GRDBUndoRedoError, GRDBUndoRedoError.foreignKeyReferencedTableNotObserved)
         }
     }
@@ -555,7 +555,7 @@ final class GRDBUndoRedoTests: XCTestCase {
         try dbQueue.writeWithoutTransaction { db in
             try db.execute(sql: "PRAGMA foreign_keys = ON;")
         }
-        undoRedo = try GRDBUndoRedo(recordTypes: RTbl1.self, RTbl2.self, db: dbQueue)
+        undoRedo = try UndoRedoManager(recordTypes: RTbl1.self, RTbl2.self, db: dbQueue)
         
         var parent = RTbl1(val1: "A")
         try dbQueue.write({ db in
@@ -596,8 +596,8 @@ final class GRDBUndoRedoTests: XCTestCase {
     }
     
     func testConcurrentInstances() throws {
-        let undoRedoA = try GRDBUndoRedo(recordTypes: Tbl1.self, db: dbQueue, tablePrefix: "URA")
-        let undoRedoB = try GRDBUndoRedo(recordTypes: Tbl2.self, db: dbQueue, tablePrefix: "URB")
+        let undoRedoA = try UndoRedoManager(recordTypes: Tbl1.self, db: dbQueue, tablePrefix: "URA")
+        let undoRedoB = try UndoRedoManager(recordTypes: Tbl2.self, db: dbQueue, tablePrefix: "URB")
         
         let itemForA = Tbl1(a: 11)
         try insertDummies([itemForA])

@@ -26,21 +26,21 @@ migrator.registerMigration("createRecords") { db in
 }
 ```
 
-Then, we advise to use the [database manager](https://github.com/groue/GRDB.swift/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md#how-to-design-database-managers) to hold the GRDBUndoRedo instance.
+Then, we advise to use the [database manager](https://github.com/groue/GRDB.swift/blob/master/Documentation/GoodPracticesForDesigningRecordTypes.md#how-to-design-database-managers) to hold the UndoRedoManager instance.
 ```swift
 class DatabaseManager {
     private let dbQueue: DatabaseQueue
-    private let undoRedo: GRDBUndoRedo
+    private let undoRedo: UndoRedoManager
     
     init(dbQueue: DatabaseQueue) throws {
         self.dbQueue = dbQueue
-        self.undoRedo = try GRDBUndoRedo(recordTypes: Book.self, db: /*your GRDB database queue or pool*/)
+        self.undoRedo = try UndoRedoManager(recordTypes: Book.self, db: /*your GRDB database queue or pool*/)
     }
 ```
 
-You can handle more than one table / record type: `self.undoRedo = try GRDBUndoRedo(recordTypes: Book.self, Author.self, Editor.self, db: ...)`. 
+You can handle more than one table / record type: `self.undoRedo = try UndoRedoManager(recordTypes: Book.self, Author.self, Editor.self, db: ...)`. 
 
-Together, the tables watched by GRDBUndoRedo form a "undo-redo scope". If the tables included in the scope have foreign key relationships to each other, see "Foreign Keys" below. 
+Together, the tables watched by UndoRedoManager form a "undo-redo scope". If the tables included in the scope have foreign key relationships to each other, see "Foreign Keys" below. 
 
 ### Edit barriers
 After each "step" (an action in your application), call `try undoRedo.barrier()`. It can then be undone by calling `try undoRedo.perform(.undo)` (then, `.redo`). 
@@ -65,13 +65,13 @@ extension DatabaseManager {
 A step can include more than one database transaction. Be careful, that all changes between two calls to `.barrier()` will be grouped in one step.
 
 ### Freezing
-If your database can receive changes without user action, e.g. through background network calls, be careful not to let the user accidentally undo these! You can tell `GRDBUndoRedo` to stop recording database changes via `.freeze()` / then `.unfreeze()`. However: this library has no understanding of your application logic, so be careful regarding data consistency.
+If your database can receive changes without user action, e.g. through background network calls, be careful not to let the user accidentally undo these! You can tell `UndoRedoManager` to stop recording database changes via `.freeze()` / then `.unfreeze()`. However: this library has no understanding of your application logic, so be careful regarding data consistency.
 
 ### Foreign keys
-If foreign keys enforcement is enabled, `GRDBUndoRedo.init` will ensure that no table, that is related through foreign keys to tables included in the undo-redo scope, are omitted; and will raise in such a case. If a database operation has cascade effects, all the changes will be included in the same step, and thus will reverted together on undo. 
+If foreign keys enforcement is enabled, `UndoRedoManager.init` will ensure that no table, that is related through foreign keys to tables included in the undo-redo scope, are omitted; and will raise in such a case. If a database operation has cascade effects, all the changes will be included in the same step, and thus will reverted together on undo. 
 
 ### Concurrent instances
-It is possible to supply a prefix to `GRDBUndoRedo.init`, so that multiple instances can handle undo-redo for **non-overlapping scopes** in the same database. Having overlapping scopes will result in unpredictable consequences and possibly inconsistent data. 
+It is possible to supply a prefix to `UndoRedoManager.init`, so that multiple instances can handle undo-redo for **non-overlapping scopes** in the same database. Having overlapping scopes will result in unpredictable consequences and possibly inconsistent data. 
 
 ## Acknowledgments
 It is largely based on the [example code available on the SQLite website](https://www.sqlite.org/undoredo.html.).

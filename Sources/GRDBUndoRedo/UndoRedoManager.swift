@@ -1,5 +1,5 @@
 //
-//  GRDBUndoRedo.swift
+//  UndoRedoManager.swift
 //  GRDBUndoRedo
 //
 //  Created by Perceval Faramaz on 22.02.23.
@@ -21,7 +21,7 @@ import GRDB
 ///
 /// The methods on this class must never be called from within a GRDB read/write block.
 /// Although, GRDB checks for such cases and will raise, so no deadlock will happen.
-class GRDBUndoRedo {
+class UndoRedoManager {
     typealias URError = GRDBUndoRedoError
     
     enum Action {
@@ -207,7 +207,7 @@ class GRDBUndoRedo {
     }
 }
 
-extension GRDBUndoRedo {
+extension UndoRedoManager {
     var isActive: Bool {
         get {
             return _undoState.active

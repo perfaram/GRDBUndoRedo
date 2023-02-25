@@ -1,5 +1,6 @@
 //
-//  File.swift
+//  UndoState.swift
+//  GRDBUndoRedo
 //  
 //
 //  Created by Perceval Faramaz on 22.02.23.

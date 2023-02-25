@@ -1,5 +1,6 @@
 //
-//  UndoRedo+Helpers.swift
+//  UndoRedoManager+Helpers.swift
+//  GRDBUndoRedo
 //  
 //
 //  Created by Perceval Faramaz on 23.02.23.
@@ -8,7 +9,7 @@
 import Foundation
 import GRDB
 
-extension GRDBUndoRedo {
+extension UndoRedoManager {
     internal func triggerNameForTable(_ table: String, type: String) -> String {
         return "_\(tablePrefix)\(table)_\(type)t"
     }
