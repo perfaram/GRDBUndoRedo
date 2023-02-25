@@ -4,7 +4,7 @@
 //
 //  Created by Perceval Faramaz on 22.02.23.
 //
-//  Mostly a translation of the Tcl example code at https://www.sqlite.org/undoredo.html
+//  Mostly a translation of the Tcl example code at https://www.sqlite.org/undoredo.html (public domain)
 //  With great help drawn from Alain Martin's translation
 //  to C++ and Python, at https://github.com/McMartin/sqlite-undoredo
 //
