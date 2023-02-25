@@ -38,10 +38,11 @@ class DatabaseManager {
     }
 ```
 
-You can handle more than one table / record type: `self.undoRedo = try GRDBUndoRedo(recordTypes: Book.self, Author.self, Editor.self, db: ...)`. Together, the tables watched by GRDBUndoRedo form a "undo-redo scope". 
-If the tables included in the scope have foreign key relationships to each other, see "Foreign Keys" below. 
+You can handle more than one table / record type: `self.undoRedo = try GRDBUndoRedo(recordTypes: Book.self, Author.self, Editor.self, db: ...)`. 
 
-### Edit barriers
+Together, the tables watched by GRDBUndoRedo form a "undo-redo scope". If the tables included in the scope have foreign key relationships to each other, see "Foreign Keys" below. 
+
+### Edit barriers
 After each "step" (an action in your application), call `try undoRedo.barrier()`. It can then be undone by calling `try undoRedo.perform(.undo)` (then, `.redo`). 
 ```
 extension DatabaseManager {
