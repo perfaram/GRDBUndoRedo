@@ -12,17 +12,19 @@ on:
 jobs:
   build:
 
-    runs-on: macOS-15
+    runs-on: macOS-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: SwiftyLab/setup-swift@latest
+      with:
+        swift-version: "6"
     - name: Build
       run: swift build -v
     - name: Run tests
       run: swift test -v --enable-code-coverage
-
     - name: Calculate Code Coverage
-      uses: maxep/spm-lcov-action@0.3.1
+      uses: Nef10/spm-lcov-action@macOS12Runner
       with:
         output-file: coverage.json
         file-format: text
