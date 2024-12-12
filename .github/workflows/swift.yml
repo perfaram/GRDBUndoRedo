@@ -23,10 +23,8 @@ jobs:
       run: swift build -v
     - name: Run tests
       run: swift test -v --enable-code-coverage
-    - name: Shim llvm-cov
-      run: alias llvm-cov="$(which xcrun || true) llvm-cov"
     - name: Calculate Code Coverage
-      uses: maxep/spm-lcov-action@0.3.1
+      uses: Nef10/spm-lcov-action@macOS12Runner
       with:
         output-file: coverage.json
         file-format: text
